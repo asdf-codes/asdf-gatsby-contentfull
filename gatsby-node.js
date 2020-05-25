@@ -1,48 +1,37 @@
 const path = require(`path`)
-const { createFilePath } = require(`gatsby-source-filesystem`)
 
 exports.createPages = async ({ graphql, actions }) => {
   const { createPage } = actions
 
-  const blogPost = path.resolve(`./src/templates/blog-post.js`)
-  const result = await graphql(
-    `
-      {
-        allMarkdownRemark(
-          sort: { fields: [frontmatter___date], order: DESC }
-          limit: 1000
-        ) {
-          edges {
+  const ideaPost = path.resolve(`./src/templates/blog-idea-contentful.js`)
+  const {data} = await graphql( `
+    query {
+      allContentfulIdea {
+          edges { 
             node {
-              fields {
-                slug
-              }
-              frontmatter {
-                title
-              }
+              slug 
+              title
             }
-          }
+          }  
         }
       }
+
     `
   )
+ 
 
-  if (result.errors) {
-    throw result.errors
-  }
+  // Create blog ideas pages.
+  const ideas = data.allContentfulIdea.edges
 
-  // Create blog posts pages.
-  const posts = result.data.allMarkdownRemark.edges
+  ideas.forEach((idea, index) => {
+    const previous = index === ideas.length - 1 ? null : ideas[index + 1].node
+    const next = index === 0 ? null : ideas[index - 1].node
 
-  posts.forEach((post, index) => {
-    const previous = index === posts.length - 1 ? null : posts[index + 1].node
-    const next = index === 0 ? null : posts[index - 1].node
-
-    createPage({
-      path: post.node.fields.slug,
-      component: blogPost,
+    actions.createPage({
+      path: idea.node.slug,
+      component: ideaPost,
       context: {
-        slug: post.node.fields.slug,
+        slug: idea.node.slug,
         previous,
         next,
       },
@@ -50,15 +39,4 @@ exports.createPages = async ({ graphql, actions }) => {
   })
 }
 
-exports.onCreateNode = ({ node, actions, getNode }) => {
-  const { createNodeField } = actions
 
-  if (node.internal.type === `MarkdownRemark`) {
-    const value = createFilePath({ node, getNode })
-    createNodeField({
-      name: `slug`,
-      node,
-      value,
-    })
-  }
-}

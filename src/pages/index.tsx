@@ -6,60 +6,36 @@ import Bio from "../components/bio"
 import Layout from "../components/layout"
 import SEO from "../components/seo"
 import { rhythm } from "../utils/typography"
+import Img from 'gatsby-image'
 
-type Data = {
-  site: {
-    siteMetadata: {
-      title: string
-    }
-  }
-  allMarkdownRemark: {
-    edges: {
-      node: {
-        excerpt: string
-        frontmatter: {
-          title: string
-          date: string
-          description: string
-        }
-        fields: {
-          slug: string
-        }
-      }
-    }[]
-  }
-}
 
-const BlogIndex = ({ data, location }: PageProps<Data>) => {
+const BlogIndex = ({ data, location }) => {
   const siteTitle = data.site.siteMetadata.title
-  const posts = data.allMarkdownRemark.edges
+  const ideas = data.allContentfulIdea.edges
 
   return (
     <Layout location={location} title={siteTitle}>
       <SEO title="All posts" />
       <Bio />
-      {posts.map(({ node }) => {
-        const title = node.frontmatter.title || node.fields.slug
+      {ideas.map(({ node }) => {
+        const title = node.title || node.slug
         return (
-          <article key={node.fields.slug}>
+          <article key={node.slug}>
             <header>
+              <Img fluid={node.cover.fluid}/>
               <h3
                 style={{
                   marginBottom: rhythm(1 / 4),
                 }}
               >
-                <Link style={{ boxShadow: `none` }} to={node.fields.slug}>
+                <Link style={{ boxShadow: `none` }} to={node.slug}>
                   {title}
                 </Link>
               </h3>
-              <small>{node.frontmatter.date}</small>
+              <small></small>
             </header>
             <section>
-              <p
-                dangerouslySetInnerHTML={{
-                  __html: node.frontmatter.description || node.excerpt,
-                }}
-              />
+              <p>{node.title}</p> 
             </section>
           </article>
         )
@@ -77,18 +53,16 @@ export const pageQuery = graphql`
         title
       }
     }
-    allMarkdownRemark(sort: { fields: [frontmatter___date], order: DESC }) {
+    allContentfulIdea {
       edges {
-        node {
-          excerpt
-          fields {
-            slug
-          }
-          frontmatter {
-            date(formatString: "MMMM DD, YYYY")
-            title
-            description
-          }
+        node { 
+          slug
+          title
+          cover {
+          fluid {
+           ...GatsbyContentfulFluid
+              }
+           }
         }
       }
     }
